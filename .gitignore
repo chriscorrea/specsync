@@ -1,0 +1,26 @@
+# binary
+specsync
+*.exe
+
+# test
+*.test
+coverage.out
+
+# editor
+.idea/
+.vscode/
+*.swp
+
+# docs
+docs/
+*.md
+!README.md
+
+# os
+.DS_Store
+
+# specsync 
+.specsync.yaml
+
+# secrets
+credentials.json
