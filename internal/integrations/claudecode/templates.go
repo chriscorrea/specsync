@@ -32,11 +32,18 @@ if [[ "$FILE_PATH" =~ [\;\|\&\$\` + "`" + `\(\)\{\}\<\>] ]]; then
   exit 0
 fi
 
-# run specsync push with -- to prevent path interpreted as flags
-if specsync push -- "$FILE_PATH" > /dev/null 2>&1; then
+# check specsync is available
+if ! command -v specsync >/dev/null 2>&1; then
+  echo "specsync: not found in PATH" >&2
+  exit 0
+fi
+
+# run specsync push and capture any error
+ERROR=$(specsync push -- "$FILE_PATH" 2>&1 >/dev/null)
+if [ $? -eq 0 ]; then
   echo "specsync: pushed $FILE_PATH" >&2
 else
-  echo "specsync: failed to push $FILE_PATH" >&2
+  echo "specsync: $FILE_PATH: $ERROR" >&2
 fi
 
 # always exit 0 — push failures should not block Claude
