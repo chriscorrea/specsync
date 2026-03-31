@@ -34,7 +34,7 @@ func ExtractProjectID(input string) (string, error) {
 
 	// extract UUID from /project/{uuid} or /projects/{uuid}
 	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
-	if len(parts) >= 2 && (parts[0] == "project" || parts[0] == "projects") {
+	if len(parts) >= 2 && (parts[0] == "project" || parts[0] == "projects" || parts[0] == "p") {
 		if _, err := uuid.Parse(parts[1]); err == nil {
 			return parts[1], nil
 		}
