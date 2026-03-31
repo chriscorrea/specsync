@@ -26,6 +26,7 @@ type Config struct {
 var DefaultInclude = []string{"docs/**/*.md", "specs/**/*.md"}
 
 const DefaultAPIURL = "http://localhost:8000/api/v1"
+const SpecPressAPIURL = "https://spec.press/api/v1"
 
 func Defaults() *Config {
 	return &Config{
