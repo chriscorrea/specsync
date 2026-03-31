@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/your-org/specsync/internal/specpress"
+	"github.com/chriscorrea/specsync/internal/specpress"
 )
 
 func TestCreateProject(t *testing.T) {

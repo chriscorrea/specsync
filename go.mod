@@ -1,4 +1,4 @@
-module github.com/your-org/specsync
+module github.com/chriscorrea/specsync
 
 go 1.24.0
 

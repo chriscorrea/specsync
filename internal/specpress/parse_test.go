@@ -3,7 +3,7 @@ package specpress_test
 import (
 	"testing"
 
-	"github.com/your-org/specsync/internal/specpress"
+	"github.com/chriscorrea/specsync/internal/specpress"
 )
 
 func TestExtractProjectID(t *testing.T) {
