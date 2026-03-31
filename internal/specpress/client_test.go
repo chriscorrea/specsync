@@ -62,7 +62,7 @@ func TestCreateProject(t *testing.T) {
 				auth := r.Header.Get("Authorization")
 				if !strings.HasPrefix(auth, "Bearer ") {
 					w.WriteHeader(401)
-					w.Write([]byte(`{"error":"Missing auth"}`))
+					_, _ = w.Write([]byte(`{"error":"Missing auth"}`))
 					return
 				}
 
@@ -78,12 +78,12 @@ func TestCreateProject(t *testing.T) {
 				}
 				if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Name == "" {
 					w.WriteHeader(400)
-					w.Write([]byte(`{"error":"Name required"}`))
+					_, _ = w.Write([]byte(`{"error":"Name required"}`))
 					return
 				}
 
 				w.WriteHeader(tt.serverCode)
-				w.Write([]byte(tt.serverBody))
+				_, _ = w.Write([]byte(tt.serverBody))
 			}))
 			defer server.Close()
 
