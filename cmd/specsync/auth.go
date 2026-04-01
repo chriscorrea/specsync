@@ -44,6 +44,7 @@ func runAuthLogin(ctx context.Context, cmd *cli.Command) error {
 		token = cmd.Args().First()
 	} else {
 		// interactive prompt
+		fmt.Println("Find your token at https://spec.press/settings")
 		prompt := &survey.Password{
 			Message: "Enter token:",
 		}
