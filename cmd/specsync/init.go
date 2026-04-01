@@ -317,7 +317,7 @@ func createSpecpressProject(jsonMode bool, projectName string, cfg *config.Confi
 	// require auth token
 	token := auth.GetToken()
 	if token == "" {
-		return nil, fmt.Errorf("authentication required. Get token at: https://spec.press/settings")
+		return nil, fmt.Errorf("authentication required\n\nSet your token using:\n  specsync auth login\n\nGet your token at: https://spec.press/settings")
 	}
 
 	// prompt for project name if not provided
