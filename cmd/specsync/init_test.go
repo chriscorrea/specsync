@@ -148,7 +148,7 @@ func TestInitSpecpress_Create_NoToken(t *testing.T) {
 
 	cmd := exec.Command(binPath, "init", "--create", "test-project", "--json")
 	cmd.Dir = projectDir
-	cmd.Env = append(os.Environ(), "SPECSYNC_TOKEN=") // clear token
+	cmd.Env = append(os.Environ(), "SPECSYNC_TOKEN=", "HOME="+projectDir) // clear token + prevent credentials file fallback
 	output, err := cmd.CombinedOutput()
 
 	// should fail
