@@ -23,7 +23,16 @@ type Config struct {
 	APIURL     string   `yaml:"api_url,omitempty"`
 }
 
-var DefaultInclude = []string{"docs/**/*.md", "specs/**/*.md"}
+var DefaultInclude = []string{
+	"specs/**/*.md",
+	"specs/*.md",
+	"docs/**/*.md",
+	"docs/*.md",
+	".kiro/specs/**/*.md",
+	".speckit/**/*.md",
+	".cursor/specs/**/*.md",
+	".claude/specs/**/*.md",
+}
 
 const DefaultAPIURL = "http://localhost:8000/api/v1"
 const SpecPressAPIURL = "https://spec.press/api/v1"
@@ -121,4 +130,20 @@ func Save(cfg *Config, path string) error {
 
 	success = true
 	return nil
+}
+
+// MergePatterns deduplicates, merges default, custom patterns
+func MergePatterns(defaults, custom []string) []string {
+	seen := make(map[string]bool, len(defaults))
+	for _, p := range defaults {
+		seen[p] = true
+	}
+	merged := append([]string{}, defaults...)
+	for _, p := range custom {
+		if !seen[p] {
+			seen[p] = true
+			merged = append(merged, p)
+		}
+	}
+	return merged
 }

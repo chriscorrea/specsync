@@ -41,6 +41,10 @@ func initCommand() *cli.Command {
 				Name:  "force",
 				Usage: "Overwrite existing config without prompting",
 			},
+			&cli.StringFlag{
+				Name:  "paths",
+				Usage: "Additional include patterns (comma-separated), appended to defaults",
+			},
 		},
 		Action: runInit,
 	}
@@ -90,10 +94,12 @@ func runInit(ctx context.Context, cmd *cli.Command) error {
 	var cfg *config.Config
 	var err error
 
+	pathsFlag := cmd.String("paths")
+
 	if specpressMode || createMode {
 		cfg, err = collectSpecpressConfig(jsonMode, specpressArg, createMode, createArg)
 	} else {
-		cfg, err = collectConfig(jsonMode)
+		cfg, err = collectConfig(jsonMode, pathsFlag)
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "interrupt") {
@@ -168,7 +174,7 @@ func runInit(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func collectConfig(jsonMode bool) (*config.Config, error) {
+func collectConfig(jsonMode bool, pathsFlag string) (*config.Config, error) {
 	cfg := config.Defaults()
 	defaultUUID := uuid.New().String()
 	detectedRepo := config.DetectGitHubRepo()
@@ -176,6 +182,9 @@ func collectConfig(jsonMode bool) (*config.Config, error) {
 	if jsonMode {
 		cfg.ProjectID = defaultUUID
 		cfg.GitHubRepo = detectedRepo
+		if pathsFlag != "" {
+			cfg.Include = config.MergePatterns(cfg.Include, parsePatterns(pathsFlag))
+		}
 		return cfg, nil
 	}
 
@@ -200,18 +209,9 @@ func collectConfig(jsonMode bool) (*config.Config, error) {
 		return nil, err
 	}
 
-	includeDefault := strings.Join(config.DefaultInclude, ", ")
-	includePrompt := &survey.Input{
-		Message: "Include patterns (comma-separated):",
-		Default: includeDefault,
-	}
-	var includeStr string
-	if err = survey.AskOne(includePrompt, &includeStr); err != nil {
+	// show defaults, ask if user wants to add custom paths
+	if err = promptAdditionalPaths(cfg); err != nil {
 		return nil, err
-	}
-	cfg.Include = parsePatterns(includeStr)
-	if len(cfg.Include) == 0 {
-		cfg.Include = config.DefaultInclude
 	}
 
 	excludePrompt := &survey.Input{
@@ -353,20 +353,42 @@ func createSpecpressProject(jsonMode bool, projectName string, cfg *config.Confi
 	return cfg, nil
 }
 
-// promptIncludePatterns prompts for include/exclude patterns
-func promptIncludePatterns(cfg *config.Config) error {
-	includeDefault := strings.Join(config.DefaultInclude, ", ")
-	includePrompt := &survey.Input{
-		Message: "Include patterns (comma-separated):",
-		Default: includeDefault,
+// promptAdditionalPaths displays defaults, asks Y/N to add custom paths
+func promptAdditionalPaths(cfg *config.Config) error {
+	//fmt.Println("\nDefault document locations:")
+	//for _, p := range config.DefaultInclude {
+	//	fmt.Printf("  %s\n", p)
+	//}
+	//fmt.Println()
+
+	fmt.Println("Specsync will look for documents in common locations by default.")
+	var addCustom bool
+	prompt := &survey.Confirm{
+		Message: "Do you want to specify your doc locations?",
+		Default: false,
 	}
-	var includeStr string
-	if err := survey.AskOne(includePrompt, &includeStr); err != nil {
+	if err := survey.AskOne(prompt, &addCustom); err != nil {
 		return err
 	}
-	cfg.Include = parsePatterns(includeStr)
-	if len(cfg.Include) == 0 {
-		cfg.Include = config.DefaultInclude
+
+	if addCustom {
+		var customStr string
+		input := &survey.Input{
+			Message: "Additional patterns (comma-separated):",
+		}
+		if err := survey.AskOne(input, &customStr); err != nil {
+			return err
+		}
+		cfg.Include = config.MergePatterns(cfg.Include, parsePatterns(customStr))
+	}
+
+	return nil
+}
+
+// promptIncludePatterns prompts for include/exclude patterns (specpress flow)
+func promptIncludePatterns(cfg *config.Config) error {
+	if err := promptAdditionalPaths(cfg); err != nil {
+		return err
 	}
 
 	excludePrompt := &survey.Input{
