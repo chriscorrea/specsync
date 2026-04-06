@@ -20,11 +20,10 @@ func TestDefaults(t *testing.T) {
 		t.Errorf("expected empty GitHubRepo, got %q", cfg.GitHubRepo)
 	}
 
-	expectedInclude := []string{"docs/**/*.md", "specs/**/*.md"}
-	if len(cfg.Include) != len(expectedInclude) {
-		t.Fatalf("expected %d include patterns, got %d", len(expectedInclude), len(cfg.Include))
+	if len(cfg.Include) != len(DefaultInclude) {
+		t.Fatalf("expected %d include patterns, got %d", len(DefaultInclude), len(cfg.Include))
 	}
-	for i, v := range expectedInclude {
+	for i, v := range DefaultInclude {
 		if cfg.Include[i] != v {
 			t.Errorf("include[%d]: expected %q, got %q", i, v, cfg.Include[i])
 		}
@@ -114,9 +113,8 @@ func TestLoadConfig_DefaultsApplied(t *testing.T) {
 	}
 
 	// optinal fields should have defaults
-	expectedInclude := []string{"docs/**/*.md", "specs/**/*.md"}
-	if len(cfg.Include) != len(expectedInclude) {
-		t.Errorf("Include = %v, want defaults %v", cfg.Include, expectedInclude)
+	if len(cfg.Include) != len(DefaultInclude) {
+		t.Errorf("Include = %v, want defaults %v", cfg.Include, DefaultInclude)
 	}
 	if len(cfg.Exclude) != 0 {
 		t.Errorf("Exclude = %v, want empty", cfg.Exclude)
@@ -261,5 +259,53 @@ func TestSaveConfig_AtomicWrite(t *testing.T) {
 		if strings.HasPrefix(entry.Name(), ".specsync.yaml.tmp") {
 			t.Errorf("temp file left behind: %s", entry.Name())
 		}
+	}
+}
+
+func TestMergePatterns(t *testing.T) {
+	tests := []struct {
+		name     string
+		defaults []string
+		custom   []string
+		want     []string
+	}{
+		{
+			name:     "empty custom appends nothing",
+			defaults: []string{"docs/**/*.md", "specs/**/*.md"},
+			custom:   []string{},
+			want:     []string{"docs/**/*.md", "specs/**/*.md"},
+		},
+		{
+			name:     "new patterns appended",
+			defaults: []string{"docs/**/*.md"},
+			custom:   []string{"placebo_payload/**/*.md", "other/*.md"},
+			want:     []string{"docs/**/*.md", "placebo_payload/**/*.md", "other/*.md"},
+		},
+		{
+			name:     "duplicate custom patterns are removed/deduped",
+			defaults: []string{"docs/**/*.md", "specs/**/*.md"},
+			custom:   []string{"docs/**/*.md", "new_and_different/**/*.md"},
+			want:     []string{"docs/**/*.md", "specs/**/*.md", "new_and_different/**/*.md"},
+		},
+		{
+			name:     "all duplicates",
+			defaults: []string{"docs/**/*.md"},
+			custom:   []string{"docs/**/*.md"},
+			want:     []string{"docs/**/*.md"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := MergePatterns(tt.defaults, tt.custom)
+			if len(got) != len(tt.want) {
+				t.Fatalf("MergePatterns() = %v, want %v", got, tt.want)
+			}
+			for i, v := range tt.want {
+				if got[i] != v {
+					t.Errorf("MergePatterns()[%d] = %q, want %q", i, got[i], v)
+				}
+			}
+		})
 	}
 }
